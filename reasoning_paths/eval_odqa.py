@@ -228,7 +228,7 @@ class ODQAEval:
 
     def retrieve(self, eval_questions):
         tfidf_retrieval_output = []
-        for _, eval_q in enumerate(tqdm(eval_questions[:50], desc="Question")):
+        for _, eval_q in enumerate(tqdm(eval_questions, desc="Question")):
             if self.args.use_full_article is True:
                 tfidf_retrieval_output += self.retriever.get_article_tfidf_with_hyperlinked_titles(
                     eval_q["id"], eval_q["question"], self.args)

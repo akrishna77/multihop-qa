@@ -6,6 +6,7 @@ import regex
 import numpy as np
 import scipy.sparse as sp
 from sklearn.utils import murmurhash3_32
+from bz2 import BZ2File as bzopen
 
 import logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -85,8 +86,9 @@ def process_jsonlines_hotpotqa(filename):
     """
     # item should be nested list
     extracted_items = []
-    with jsonlines.open(filename) as reader:
-        for obj in reader:
+    # with jsonlines.open(filename) as reader:
+    with bzopen(filename, "r") as bzfin:
+        for obj in jsonlines.Reader(bzfin):
             wiki_id = obj["id"]
             title = obj["title"]
             title_id = make_wiki_id(title, 0)

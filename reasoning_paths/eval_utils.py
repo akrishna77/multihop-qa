@@ -52,20 +52,22 @@ def metric_max_over_ground_truths(metric_fn, prediction, ground_truths):
         scores_for_ground_truths.append(score)
     return max(scores_for_ground_truths)
 
-def evaluate(eval_file_path, predictions, quiet=False, multiple_gts=True):
+def evaluate(eval_file_path, predictions, quiet=False, multiple_gts=False):
     eval_data = read_jsonlines(eval_file_path)
     f1 = exact_match = total = 0
 
     for qa in eval_data:
         q_id = qa['id']
+        print(qa['question'].encode('utf-8'))
         if str(q_id) not in predictions:
-            print("q_id: {0} is missing.".format(q_id))
+            print("q_id: {0} is missing.\n".format(q_id))
             continue
         if multiple_gts is True:
             ground_truths = qa['answers']
         else:
             ground_truths = qa['answer']
         prediction = predictions[q_id]
+        print(prediction.encode('utf-8'))
         exact_match += metric_max_over_ground_truths(
             exact_match_score, prediction, ground_truths)
         f1 += metric_max_over_ground_truths(
