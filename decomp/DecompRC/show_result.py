@@ -7,7 +7,7 @@ from tqdm import tqdm
 from collections import defaultdict, Counter
 from prettytable import PrettyTable
 
-from hotpot_evaluate_v1 import f1_score
+from hotpot_evaluate_v1 import f1_score, eval
 
 def f1(pred, a):
     return f1_score(pred, a[1])[0]
@@ -45,7 +45,7 @@ def main():
         pt = PrettyTable()
         pt.field_names =  ["name", "F1"]
         pt.add_row(["Ovearll", "%.3f" % (100.0*np.mean([v for k, v in all_f1s.items()]))])
-        for key in  ['bridge','comparison']:
+        for key in  ['bridge','comparison','intersec', 'onehop']:
             pt.add_row([key, "%.3f" % (100.0*np.mean([v for k, v in all_f1s.items() if id2question[k][2]==key]))])
         print (pt)
 
@@ -90,9 +90,12 @@ def main():
     ### Final results from Decomposition Scorer
     print ("=== final ===")
     print_result(verifier_f1s)
+    # eval('out/scorer/dev_class_scores.json', args.data_file)
 
     with open(args.prediction_file, 'w') as f:
         json.dump(final_prediction, f)
+
+    
 
 if __name__ == '__main__':
     main()
