@@ -29,7 +29,7 @@ def main():
         training_data = load_hotpot(args, 'train')
         save(training_data, 'hotpot-all', 'train')
         dev_data = load_hotpot(args,  'dev_distractor')
-        pdb.set_trace()
+        # pdb.set_trace()
         save(dev_data, 'hotpot-all', 'dev')
     elif args.task == 'hotpot-all-sf':
         training_data = load_hotpot(args, 'train', only_sf=True)
