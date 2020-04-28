@@ -132,10 +132,11 @@ def store_contents(wiki_dir, save_path, preprocess, num_workers=None, hotpotqa_f
             count += len(pairs)
             c.executemany(
                 "INSERT OR REPLACE INTO documents VALUES (?,?,?,?)", pairs)
+            logger.info('Committing...')
+            conn.commit()
             pbar.update()
     logger.info('Read %d docs.' % count)
-    logger.info('Committing...')
-    conn.commit()
+    
     conn.close()
 
 # ------------------------------------------------------------------------------
