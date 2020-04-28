@@ -28,23 +28,6 @@ def main():
         print("EM :{0}, F1: {1}".format(results['exact_match'], results['f1']))
 
     # Save the intermediate results.
-    if odqa.args.tfidf_results_save_path is not None:
-        print('#### save TFIDF Retrieval results to {}####'.format(
-            odqa.args.tfidf_results_save_path))
-        with open(odqa.args.tfidf_results_save_path, "w") as writer:
-            writer.write(json.dumps(tfidf_retrieval_output, indent=4) + "\n")
-    
-    if odqa.args.selector_results_save_path is not None:
-        print('#### save graph-based Retrieval results to {} ####'.format(
-            odqa.args.selector_results_save_path))
-        with open(odqa.args.selector_results_save_path, "w") as writer:
-            writer.write(json.dumps(selector_output, indent=4) + "\n")
-
-    if odqa.args.reader_results_save_path is not None:
-        print('#### save reader results to {} ####'.format(
-            odqa.args.reader_results_save_path))
-        with open(odqa.args.reader_results_save_path, "w") as writer:
-            writer.write(json.dumps(reader_output, indent=4) + "\n")
             
     if odqa.args.sequence_sentence_selector_save_path is not None:
         print("#### save sentence selector results to {} ####".format(

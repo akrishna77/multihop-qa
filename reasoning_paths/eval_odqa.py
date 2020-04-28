@@ -301,11 +301,29 @@ class ODQAEval:
                     open(self.args.saved_tfidf_retrieval_outputs_path))
             else:
                 tfidf_retrieval_output = self.retrieve(eval_questions)
+
+            if self.args.tfidf_results_save_path is not None:
+                print('#### save TFIDF Retrieval results to {}####'.format(
+                    self.args.tfidf_results_save_path))
+                with open(self.args.tfidf_results_save_path, "w") as writer:
+                    writer.write(json.dumps(tfidf_retrieval_output, indent=4) + "\n")
                 
             selector_output = self.select(tfidf_retrieval_output)
+
+            if self.args.selector_results_save_path is not None:
+                print('#### save graph-based Retrieval results to {} ####'.format(
+                    self.args.selector_results_save_path))
+                with open(self.args.selector_results_save_path, "w") as writer:
+                    writer.write(json.dumps(selector_output, indent=4) + "\n")
         
         # read and extract answers from reasoning paths
         reader_output, titles = self.read(selector_output)
+
+        if self.args.reader_results_save_path is not None:
+            print('#### save reader results to {} ####'.format(
+                self.args.reader_results_save_path))
+            with open(self.args.reader_results_save_path, "w") as writer:
+                writer.write(json.dumps(reader_output, indent=4) + "\n")
         
         if self.args.sequential_sentence_selector_path is None:
             return tfidf_retrieval_output, selector_output, reader_output
