@@ -7,10 +7,13 @@ from tqdm import tqdm
 from collections import defaultdict, Counter
 from prettytable import PrettyTable
 
-from hotpot_evaluate_v1 import f1_score, eval
+from hotpot_evaluate_v1 import f1_score, eval, exact_match_score
 
 def f1(pred, a):
     return f1_score(pred, a[1])[0]
+
+def em(pred, a):
+    return exact_match_score(pred, a[1])[0]
 
 def main():
     parser = argparse.ArgumentParser()
@@ -64,17 +67,22 @@ def main():
     ### Upperbound
     print ("=== upperbound ===")
     f1s_upperbound = {}
+    ems_upperbound = {}
     for k, dic in nbest_output.items():
         candidates = [ps[0]['text'] for ps in dic.values()]
         max_f1 = max([f1(candi, id2question[k]) for candi in candidates])
+        max_em = max([em(candi, id2question[k]) for candi in candidates])
         f1s_upperbound[k] = max_f1
+        ems_upperbound[k] = max_em
     print_result(f1s_upperbound)
+    print_result(ems_upperbound)
 
     all_f1s = {}
     with open('out/scorer/dev_class_scores.json', 'r') as f:
         verifier_output = json.load(f)
 
     verifier_f1s = {}
+    verifier_ems = {}
     reasoning_counter = Counter()
     reasoning_list = ['(bridge)', '(intersec)', '(onehop)', '(comparison)']
     final_prediction = defaultdict(dict)
@@ -84,12 +92,14 @@ def main():
         reasoning = reasoning_list[which_reasoning.index(True)]
         answer = prediction[prediction.index(reasoning)+len(reasoning):].strip()
         verifier_f1s[k] = f1(answer, id2question[k])
+        verifier_ems[k] = em(answer, id2question[k])
         reasoning_counter[reasoning[1:-1]]+=1
         final_prediction['answer'][k] = (answer, reasoning[1:-1])
 
     ### Final results from Decomposition Scorer
     print ("=== final ===")
     print_result(verifier_f1s)
+    print_result(verifier_ems)
     # eval('out/scorer/dev_class_scores.json', args.data_file)
 
     with open(args.prediction_file, 'w') as f:
