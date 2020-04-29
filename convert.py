@@ -6,6 +6,11 @@ import sys
 
 # HotPotQA dev file can be found at http://curtis.ml.cmu.edu/datasets/hotpot/hotpot_dev_fullwiki_v1.json
 
+#Change this flag to true to include all reasoning paths found by the retriever, not just the top one
+LOAD_ALL_CONTEXT = True
+TOP_K_VAL = 3
+
+
 def extract_data(q_id, data, keys):
 	#Extract a question's data from hotpotqa_dev using the question ID as a foreign key
 	for obj in data:
@@ -45,7 +50,25 @@ if __name__ == "__main__":
 	for obj in rp_data:
 		new_obj = {}
 		new_obj['_id'] = obj['q_id']
-		contexts = obj['topk_titles'][0]
+		if LOAD_ALL_CONTEXT:
+			contexts = []
+			for context_list in obj['topk_titles']: #Extract unique values
+				for context in context_list:
+					if context not in contexts:
+						contexts.append(context)
+		else:
+			if len(contexts) > TOP_K_VAL:
+				contexts = []
+				for context_list in obj['topk_titles'][:TOP_K_VAL-1]: #Extract unique values
+					for context in context_list:
+						if context not in contexts:
+							contexts.append(context)
+			else:
+				for context_list in obj['topk_titles']:
+					for context in context_list:
+						if context not in contexts:
+							contexts.append(context)
+
 		hp_feats = extract_data(new_obj['_id'], hp_data, ['supporting_facts', 'answer', 'type', 'level'])
 
 		c_list = []
