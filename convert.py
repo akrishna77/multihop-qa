@@ -8,6 +8,7 @@ import sys
 
 #Change this flag to true to include all reasoning paths found by the retriever, not just the top one
 LOAD_ALL_CONTEXT = True
+TOP_K_VAL = 3
 
 
 def extract_data(q_id, data, keys):
@@ -56,7 +57,18 @@ if __name__ == "__main__":
 					if context not in contexts:
 						contexts.append(context)
 		else:
-			contexts = obj['topk_titles'][0]
+			if len(contexts) > TOP_K_VAL:
+				contexts = []
+				for context_list in obj['topk_titles'][:TOP_K_VAL-1]: #Extract unique values
+					for context in context_list:
+						if context not in contexts:
+							contexts.append(context)
+			else:
+				for context_list in obj['topk_titles']:
+					for context in context_list:
+						if context not in contexts:
+							contexts.append(context)
+
 		hp_feats = extract_data(new_obj['_id'], hp_data, ['supporting_facts', 'answer', 'type', 'level'])
 
 		c_list = []
