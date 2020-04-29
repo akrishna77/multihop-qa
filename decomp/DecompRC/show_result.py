@@ -13,7 +13,7 @@ def f1(pred, a):
     return f1_score(pred, a[1])[0]
 
 def em(pred, a):
-    return exact_match_score(pred, a[1])[0]
+    return exact_match_score(pred, a[1])
 
 def main():
     parser = argparse.ArgumentParser()
@@ -44,9 +44,9 @@ def main():
         if k in comp_keys:
             nbest_output[k]['comparison'] = v
 
-    def print_result(all_f1s):
+    def print_result(all_f1s, metric="F1"):
         pt = PrettyTable()
-        pt.field_names =  ["name", "F1"]
+        pt.field_names =  ["name", metric]
         pt.add_row(["Ovearll", "%.3f" % (100.0*np.mean([v for k, v in all_f1s.items()]))])
         for key in  ['bridge','comparison','intersec', 'onehop']:
             pt.add_row([key, "%.3f" % (100.0*np.mean([v for k, v in all_f1s.items() if id2question[k][2]==key]))])
@@ -75,7 +75,7 @@ def main():
         f1s_upperbound[k] = max_f1
         ems_upperbound[k] = max_em
     print_result(f1s_upperbound)
-    print_result(ems_upperbound)
+    print_result(ems_upperbound, metric="EM")
 
     all_f1s = {}
     with open('out/scorer/dev_class_scores.json', 'r') as f:
@@ -99,7 +99,7 @@ def main():
     ### Final results from Decomposition Scorer
     print ("=== final ===")
     print_result(verifier_f1s)
-    print_result(verifier_ems)
+    print_result(verifier_ems,metric="EM")
     # eval('out/scorer/dev_class_scores.json', args.data_file)
 
     with open(args.prediction_file, 'w') as f:
