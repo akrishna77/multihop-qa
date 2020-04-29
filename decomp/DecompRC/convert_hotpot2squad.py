@@ -82,7 +82,10 @@ def load_hotpot(args, data_type, only_bridge=False, only_comparison=False,
         sfs = [(_process_sent(t), s) for t, s in article['supporting_facts']]
         question = article['question']
         answer = article['answer'].strip()
-
+        print(article['_id'] + ' | ' + question)
+        print(paragraphs)
+        print('===================================')
+        print(sfs)
         para_with_sf = set()
         contexts_list, answers_list = [], []
         for para_idx, para in enumerate(paragraphs):
@@ -94,9 +97,11 @@ def load_hotpot(args, data_type, only_bridge=False, only_comparison=False,
 
             if only_gold and title not in [t for t, _ in sfs]:
                 continue
-
+            print('=================================')
             for sent_idx, sent in enumerate(content):
+                print(title, sent_idx)
                 is_sf = (title, sent_idx) in sfs
+                print(is_sf)
                 if only_sf and not is_sf:
                     continue
                 contexts.append(sent.lower().strip())
@@ -118,8 +123,8 @@ def load_hotpot(args, data_type, only_bridge=False, only_comparison=False,
                 contexts_list.append(context)
                 answers_list.append(answers)
 
-        assert len(para_with_sf)>1
-        assert len(contexts_list)>1
+        #assert len(para_with_sf)>1
+        #assert len(contexts_list)>1
 
         if only_sf:
             merged_context = ""
