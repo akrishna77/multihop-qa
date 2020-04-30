@@ -7,7 +7,7 @@ from tqdm import tqdm
 from collections import defaultdict, Counter
 from prettytable import PrettyTable
 
-from hotpot_evaluate_v1 import f1_score, eval, exact_match_score
+from hotpot_evaluate_v1 import f1_score, exact_match_score
 
 def f1(pred, a):
     return f1_score(pred, a[1])[0]
