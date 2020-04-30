@@ -7,7 +7,7 @@ import sys
 # HotPotQA dev file can be found at http://curtis.ml.cmu.edu/datasets/hotpot/hotpot_dev_fullwiki_v1.json
 
 #Change this flag to true to include all reasoning paths found by the retriever, not just the top one
-LOAD_ALL_CONTEXT = True
+LOAD_ALL_CONTEXT = False
 TOP_K_VAL = 3
 
 
@@ -47,6 +47,8 @@ if __name__ == "__main__":
 
 	hotpot_list = []
 
+	total_paths = 0
+	num_qs = 0
 	for obj in rp_data:
 		new_obj = {}
 		new_obj['_id'] = obj['q_id']
@@ -57,7 +59,9 @@ if __name__ == "__main__":
 					if context not in contexts:
 						contexts.append(context)
 		else:
-			if len(contexts) > TOP_K_VAL:
+			total_paths += len(obj['topk_titles'])
+			num_qs += 1
+			if len(obj['topk_titles']) > TOP_K_VAL:
 				contexts = []
 				for context_list in obj['topk_titles'][:TOP_K_VAL-1]: #Extract unique values
 					for context in context_list:
@@ -94,3 +98,5 @@ if __name__ == "__main__":
 
 	with open(output_file, 'w+') as f:
 		json.dump(hotpot_list, f)
+
+	print("Average number of reasoning paths: ", float(total_paths/num_qs))
