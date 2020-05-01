@@ -316,14 +316,19 @@ class ODQAEval:
                 with open(self.args.selector_results_save_path, "w") as writer:
                     writer.write(json.dumps(selector_output, indent=4) + "\n")
         
-        # read and extract answers from reasoning paths
-        reader_output, titles = self.read(selector_output)
+        if self.args.saved_selector_outputs_path:
+            reader_output = {}
+            for s in selector_output:
+                reader_output[s["_id"]] = s["answer"]
+        else:
+            # read and extract answers from reasoning paths
+            reader_output, titles = self.read(selector_output)
 
-        if self.args.reader_results_save_path is not None:
-            print('#### save reader results to {} ####'.format(
-                self.args.reader_results_save_path))
-            with open(self.args.reader_results_save_path, "w") as writer:
-                writer.write(json.dumps(reader_output, indent=4) + "\n")
+            if self.args.reader_results_save_path is not None:
+                print('#### save reader results to {} ####'.format(
+                    self.args.reader_results_save_path))
+                with open(self.args.reader_results_save_path, "w") as writer:
+                    writer.write(json.dumps(reader_output, indent=4) + "\n")
         
         if self.args.sequential_sentence_selector_path is None:
             return tfidf_retrieval_output, selector_output, reader_output
