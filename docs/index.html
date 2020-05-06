@@ -19,6 +19,13 @@ color: #3366CC;
 .data {
 color: #FF9900;
 }
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding: 5px;
+  margin-left: auto;
+  margin-right: auto;
+}
 </style>
   
 <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
@@ -26,6 +33,17 @@ color: #FF9900;
 <!-- HTML5 shim, for IE6-8 support of HTML5 elements --><!--[if lt IE 9]>
 <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 <![endif]-->
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+
 </head>
 
 <body>
@@ -42,52 +60,335 @@ color: #FF9900;
 <!-- Goal -->
 <h3>Abstract</h3>
 
-One or two sentences on the motivation behind the problem you are solving. One or two sentences describing the approach you took. One or two sentences on the main result you obtained.
+This project aims at reproducing experiments for two published papers and verifying their validity and conclusions for the task of multi-hop question answering. The models in consideration for this analysis are <b>DecompRC</b> and <b>Graph-based Recurrent Retriever</b>. In addition to reproduction, we also experiment with combining the merits of the two models to evaluate an alternative approach to solving the same task and present our results on the <b>HotpotQA</b> dataset. In reproducing these experiments, we achieved very similar results as those claimed in their work. In our proposed combined approach we integrate a recurrent information retrieval system with question decomposition to provide a reading comprehension model that answers one single hop question at a time and utilizes a smaller, more accurate context. This resulted in improved results compared to DecompRC, but was unable to achieve similar results as the Graph-based Recurrent Retriever. With this we believe that having a narrow and accurate context is important and that question decomposition can be a useful idea, but there is more work need to achieve state of the art results.
+
 <br><br>
-<!-- figure -->
-<h3>Teaser figure</h3>
-A figure that conveys the main idea behind the project or the main application being addressed.
+
+<!-- Introduction -->
+<h3>Motivation</h3>
+Open domain question answering is a task that involves automatically answering questions across domains by retrieving their answers across a large collection of source documents. Multi-hop question answering is a sub-task that focuses on retrieving answers to questions, for which the evidence is spread across multiple documents and may or may not have semantic and lexical overlap with the original question itself. This task involves being able to analyze multiple documents in the context of each other, and an example of such a question is shown in Figure.
 <br><br>
 <!-- Main Illustrative Figure --> 
 <div style="text-align: center;">
-<img style="height: 200px;" alt="" src="">
+<img style="" alt="" src="images/mrc_example.png">
 </div>
 
 <br><br>
-<!-- Introduction -->
-<h3>Introduction</h3>
-Motivation behind the problem you are solving, what applications it has, any brief background on the particular domain you are working in (if not regular RBG photographs), etc. If you are using a new way to solve an existing problem, briefly mention and describe the existing approaches and tell us how your approach is new.
+
+This poses a particularly hard problem for models such as simple non-parameteric approaches that use term frequencies like TF-IDF and BM25. While effective for simple single-hop questions, these models fail to extract answers in the multi-hop scenario. This is clearly shown through adversarial tests on single-hop reading comprehension models that prove there is a significant gap between machine and human reading comprehension levels.
+
+Open domain multi-hop QA addresses this difference by using multiple steps to answer a single question without any given context for the reader. An example of such a question is “What government position was held by the woman who portrayed Corliss Archer in the film Kiss and Tell?”, which requires multiple steps by first requiring the answer to “Who portrayed Corliss Archer in the film Kiss and Tell?” (question one) and using the answer to question one, we need to answer “What government position was held by [ANSWER]?” where [ANSWER] is the answer to question one. The context for these questions would be all the articles from Wikipedia. This presents two clear challenges: retrieving the correct contextual information and finding the multi-hop answer from the retrieved context.
 
 <br><br>
-<!-- Approach -->
-<h3>Approach</h3>
-Describe very clearly and systematically your approach to solve the problem. Tell us exactly what existing implementations you used to build your system. Tell us what obstacles you faced and how you addressed them. Justify any design choices or judgment calls you made in your approach.
+
+<!-- Related Work -->
+<h3>Related Work</h3>
+<b>Retrieve-and-Read:</b> Chen et al. developed a “retrieve and read” approach which separates open domain question answering into a two part process: information retrieval and reading comprehension. This allows the two models to be trained and developed independently. They employ a TF-IDF based document retriever along with a state-of-the-art reading comprehension model. While this allows optimizing each part individually, Qi et al. and Ding et al. argue that to answer multi-hop questions, these two processes need to be jointly trained.
+<br><br>
+<b>Graph-based retrieval:</b> Ding et al. present CogQA which comprises two systems that iteratively arrive at a final reasoning path and answer and is inspired by the observed method used by the human brain. The first system extracts entities and answer candidates that are relevant to the question and organizes them as a cognitive graph. The second system reasons over this graph, and finds “clues” that guide the first system to extract better entities. This process is repeated until all possible answers are found, and then the final answer is derived from reasoning results. This approach was notably successful, as achieved results significantly higher than other models such as BERT and DecompRC.
+<br><br>
+<b>Iterative retrieval:</b> Qi et al. develop a method “GoldEn Retriever” that works similar to CogQA but instead of using a graph based document structure, GoldEn uses the question and all currently available supporting facts from earlier queries to generate new queries that encode all the context learned so far. More recently Fang et al. created a Hierarchical Graph Network (HGN) that utilized varying levels of granularity to create a more exact graph of the supporting facts where nodes are as broad as paragraphs and as fine grained as single entities. HGN optimizes over several sub-tasks to ensure that the answers are correct and explainable through the reasoning paths (paragraph selection, supporting fact prediction, entity prediction, and answer span extraction). Asai et al. use a recurrent information retrieval system to develop the reasoning paths. On top of this, they maintain the top $k$ reasoning paths and generate a set of answers as the final step, before choosing the best of these final answers.
+<br><br>
+<b> Question Decomposition:</b> One of the earlier approaches, Min et al. focuses on decomposing the question to simplify the task of the reader compared to improving the information retrieval. DeCompRC attempts to split a multi-hop question into multiple single-hop questions of four different sub-types (bridging, intersection, comparison, one-hop). From here, the reader predicts the answer for each sub-question with the given context and selects the sub-question and answer with the max score as the final answer. See Figure below, seen in the DecompRC paper, for an example of this decomposition and scoring process.
+<br><br>
+<!-- Main Illustrative Figure --> 
+<div style="text-align: center;">
+<img style="" alt="" src="images/decomp.png">
+</div>
+
+<br><br>
+We believe that the analysis of systems that utilize all of the merits of these above approaches is lacking, and the results of integrating all these together is valuable information. Because open domain multi-hop question answering is complex, there are many sub-tasks that can be optimized to improve the results. The works focus on improving either the information retrieval, supporting fact prediction, question decomposition, or reading model, but none of the works attempt to utilize all these aspects. While combining some of these approaches would make the system more complex, each model would have to focus on a simpler sub-task.
+<br><br>
+Question answering systems are widely used in active areas of research as well as many places in industry. As we strive to implement models that are able to understand and generate language that is more grounded, performing well in multi-hop question answering is a crucial step to ensure models are understanding the different complexities in language and not searching for shortcuts. With this in mind, researchers are actively looking for new approaches that can improve language models to perform better at multi-hop question answering. With large performance gains, areas of work such as chat-bots, search queries, and knowledge graphs will lead to an overall improvement in the AI-Natural Language domain.
+<br><br>
+If we are successful, we will be able to show that not only is improving the retriever and reader a worthwhile approach, but that the structure and simplicity of the question is just as important. This will suggest that question decomposition is a useful sub-task in the process of jointly optimizing an open domain multi-hop question answering model.
+
+<br><br>
+
+<!-- Data -->
+<h3>Data</h3>
+HotpotQA is the dataset we will be using as it contains natural, multi-hop questions, that were curated with strong supervision for supporting facts to enable more explainable question answering systems. It has been designed in a distractor setting as well as a full Wikipedia setting, containing 90,500 questions for training and 7,400 for validation. The distractor settings gives 10 paragraphs with eight being distractions and two containing relevant information. This introduces the task of narrowing down the provided documents to those that contain relevant facts, and can make the task much more difficult. The full wikipedia setting gives a dump of English Wikipedia from 2018 to use for finding the correct answer and supporting facts. This data dump contains 5.7 million articles, of which only a few will pertain to any particular question in the dataset. Because we don’t have access to ground truth values of the test set of HotpotQA, we will base our discussions on the validation set and compare them to those presented in the papers. Tables below shows the number and type of HotpotQA questions, and examples of different questions and answers.
+<br><br>
+<table style="text-align: center;">
+  <caption>HotpotQA Examples</caption>
+  <br>
+  <tr>
+    <th>Question Type</th>
+    <th>Question</th>
+    <th>Answer</th>
+  </tr>
+  <tr>
+    <td>Comparison</td>
+    <td>Were Scott Derrickson and Ed Wood of the same nationality?</td>
+    <td>yes</td>
+  </tr>
+  <tr>
+    <td>Bridge</td>
+    <td>2014 S/S is the debut album of a South Korean boy group that was formed by who?</td>
+    <td>YG Entertainment</td>
+  </tr>
+</table>
+
+<br><br>
+<table style="text-align: center;">
+  <caption>Question Count</caption>
+  <br>
+  <tr>
+    <th>Question Type</th>
+    <th>Count</th>
+  </tr>
+  <tr>
+    <td>Bridge</td>
+    <td>78,909</td>
+  </tr>
+  <tr>
+    <td>Comparison</td>
+    <td>18,943</td>
+  </tr>
+</table>
+
+<br><br>
+
+<!-- Multihop Question Answering -->
+<h3>Methodology</h3>
+Our initial goal in this project was to reproduce the results and experiments presented in the ICLR 2020 paper submission by Asai et al. titled <i>“Learning to Retrieve Reasoning Paths over Wikipedia Graph for Question Answering”</i>. To increase the scope of the project, we also chose to reproduce the results of the ACL 2020 paper by Min et al. titled <i>“Multi-hop Reading Comprehension through Question Decomposition and Rescoring”</i>. We have also presented our own approach to solving the multi-hop question answering task by utilizing the merits of the above techniques.
+
+<!-- Reasoning Paths Retrieval Reproducibility -->
+<h3>Reasoning Paths Retrieval Reproducibility</h3>
+The authors use Wikipedia for open-domain QA, where each article is divided into paragraphs. Each paragraph is considered as the retrieval target. Given a question, the framework aims at deriving the answer by retrieving and reading reasoning paths, each of which is represented with a sequence of paragraphs. The authors formulate the task by decomposing the objective into the retriever objective that selects reasoning paths relevant to the question, and the reader objective that finds the answer.
+<br><br>
+<b>Graph Construction:</b> This work proposes document retrieval as a graph-based neural path search over Wikipedia articles where each paragraph represents a node and each internal hyperlink is considered as an edge. They use this approach mainly because evidence paragraphs for a complex question do not necessarily have lexical overlaps with the question, and entities in the graph usually entail other paragraphs as well.
+<br><br>
+<b>Recurrent Retriever:</b> The graph-based recurrent retriever iteratively retrieves evidence documents for multiple reasoning paths conditioned on the history of documents that were retrieved previously. The RNN-based module first brings in relevant seed nodes and uses this as the starting step for estimating sequences of paragraphs that could contain the answer to the question. This is done based on BERT’s [CLS] token representations on independently encoded question and candidate paragraphs. The process terminates on encountering an end-of-evidence symbol to allow capturing arbitrary length reasoning paths unlike previous methods that had the search termination conditions hard-coded.
+<br><br>
+The authors use annotated evidence paragraphs in a supervised manner with a “negative sampling + data augmentation and inference-time decoding” strategy to train the retriever. Ground-truth reasoning paths were derived using the annotated data in each dataset. The negative samples then help the retriever discriminate between relevant and irrelevant paragraphs at each step. Additional reasoning paths have also been added to the training data to stabilize the training process. For the sequential prediction task, they jointly optimize the model and BERT using a binary cross-entropy loss function.
+<br><br>
+<b>Reader:</b> The reader model verifies the reasoning paths and returns an answer span from the most plausible reasoning path. The reader is modeled for multi-task learning of reading comprehension and reasoning path re-ranking. For the reading comprehension task, they use BERT, where the input is the concatenation of the question text and the text of all the paragraphs in the path. This allows the reader model to leverage the self-attention mechanism across concatenated paragraphs. They reuse the same model for re-ranking.
+<br><br>
+The multi-task reader model is trained using ground-truth evidence paragraphs that were used for training the retriever. Negative samples are added to training data to help the model discriminate between relevant and irrelevant paragraphs. The objective function used is the sum of cross entropy losses for the span prediction and re-ranking tasks.
+<br><br>
+The paper also uses search strategies like beam search, to reduce computational complexity of the search tree and help the framework work better on both single and multihop questions.
+<br><br>
+Reproducing this paper involved understanding the authors’ approach to solving this problem, and experimenting specifically with different modules in their implementation, before adapting them to our specific use-case. The authors have implemented their method in PyTorch.
+<br><br>
+<!-- DeCompRC Reproducibility -->
+<h3>DecompRC Reproducibility</h3>
+When recreating the DecompRC paper, we utilized the open-source code repository described earlier. This repository was implemented in PyTorch and contained pre-trained models for these tasks. We utilized their pretrained models for question decomposition as well as question answering. These models decompose the question using span prediction with the assumption that sub questions can be extracted with light editing to make a complete sub-question. This is done using BERT to encode the question and a pointer matrix to determine scores for the start index where each type of sub question has a pre-defined length controlled by a hyperparameter. This final matrix $Y$ denotes the span prediction start index scores where $$ {Y_{ij} = P{}(i = ind_j)} $$ gives the probability that the $i$th word is the $j$th index from the pointer and the product of the top $c$ indices determine the span.
+<br><br>
+From here the reading comprehension model is used to answer each sub-question, giving a final result after the second sub-question is answered. This is done using BERT with a paragraph selection approach. Reasoning across multiple paragraphs is difficult due to the paragraph selection, but this is somewhat alleviated by utilizing the sub-questions.
+<br><br>
+With the final answers to each decomposed sub-question type (bridge, intersection, comparison, and onehop), a decomposition scorer is used to determine which question decomposition, answer pair is the most likely. This is determined using BERT to encode each question, question type, answer, and evidence set which provides an output $U$ such that $U_t \in R{}^{n\times h}$ where $t$ denotes the decomposition type. The final score for each question decomposition is given by
+
+$$p_t = sigmoid(W^T_2max(U_t))$$
+
+where $t$ is the decomposition type and $W_2$ is a trainable matrix. The max $p_t$ is the chosen decomposition, question, answer, evidence set. A visual example of the scorer can be seen in Figure.
+<br><br>
+
+<!-- Our Approach -->
+<h3>Our Approach</h3>
+In our approach, we combine three works. We incorporate these approaches as each improves upon a subtask in open-domain multi-hop question answering. Min et al. develops a human level question decomposer which transforms a multi-hop question into two single-hop sub questions. Asai et al. proposes a graph-based recurrent information retrieval system that accurately retrieves contextual information without large computational complexity. Lastly, Min et al. presents a BERT-based single-hop reading comprehension model that performs well on multi-hop question answering. With the combination of these three models, we present a system that simplifies multi-hop question answering into simpler tasks and hope to improve performance, while reducing the complexity of any single model.
+<br><br>
+We combine these by first, obtaining the top-k reasoning paths using where k is a hyperparameter. Once we have the top-k paths, we extract all unique context paragraphs which will replace the original context. From here, we compute the question decompositions and each sub-question is answered with the reading comprehension model from Min et al. where the final answer to each decomposition is the answer to the last sub-question. Each of these question, decomposition, context, and answer sets are scored and the set with the max score is chosen as the final answer. A visualization of this pipeline can be seen in Figure.
+<br><br>
+<!-- Main Illustrative Figure --> 
+<div style="text-align: center;">
+<img style="" alt="" src="images/pipeline.png">
+</div>
+<br><br>
+We chose this approach as it allows for modularity between question decomposition, scoring, and selecting reasoning paths. Although past works claim this is not always ideal. Asai et al. have shown that this approach is still able to get near state of the art. Our approach specifically attempts to address the issue of finding good supporting facts and answer the question accurately and our core assumption is that breaking down this process into simpler sub-questions will allow the system to perform better.
+<br><br>
+One major problem that could arise from our approach is that if any of these models in Figure provide incorrect information then this information will continue to propagate into the final answer without having the ability to re-adjust the solution. This did end up being an issue both with the selection of reasoning paths and the question decomposition. While we were not able to completely resolve the issue, we improved the performance by allowing more than the top reasoning path and combining the paths, mentioned above.
 
 <br><br>
 <!-- Results -->
-<h3>Experiments and results</h3>
-Provide details about the experimental set up (number of images/videos, number of datasets you experimented with, train/test split if you used machine learning algorithms, etc.). Describe the evaluation metrics you used to evaluate how well your approach is working. Include clear figures and tables, as well as illustrative qualitative examples if appropriate. Be sure to include obvious baselines to see if your approach is doing better than a naive approach (e.g. for classification accuracy, how well would a classifier do that made random decisions?). Also discuss any parameters of your algorithms, and tell us how you set the values of those parameters. You can also show us how the performance varies as you change those parameter values. Be sure to discuss any trends you see in your results, and explain why these trends make sense. Are the results as expected? Why?
-
+<h3>Experiments and Results</h3>
+<!-- Reasoning Paths Retrieval -->
+<h3>Reasoning Paths Retrieval </h3>
+As we don’t have access to ground truth labels for the HotpotQA test set, Table shows the results of the Graph-based Recurrent Retriever on the HotpotQA fullwiki development dataset. We were able to replicate results that were presented by the authors in their paper. This involved computing TF-IDF representations of the fullwiki dataset. Due to computational limitations we had to restrict this to only introductory paragraphs, and this same decision was made in the oringinal paper itself. This resulted in a graph with about 5.2 million nodes and 23.4 million edges. Similar to the paper itself, we use the pre-trained BERT models from Devlin et al. using the uncased base configuration (d = 768) for our retriever and the whole word masking uncased large (wwm) configuration (d = 1024) for our readers. We use the same hyperparameters for the TF-IDF based seed retrieval model as Chen et al. We used a beam size of 8 and the number of initial seed paragraphs for TF-IDF as 500, as these were hyperparameters chosen by the authors using the HotpotQA Dev set.
 <br><br>
-
-<!-- Main Results Figure --> 
+<table style="text-align: center;">
+  <caption>F1 scores and Exact Matches reported on the Dev set of HotpotQA full wiki setting.</caption>
+  <br>
+  <tr>
+    <th rowspan=2>Model</th>
+    <th colspan=2>QA</th>
+    <th colspan=2>SP</th>
+  </tr>
+  <tr>
+    <th>EM</th>
+    <th>F1</th>
+    <th>EM</th>
+    <th>F1</th>
+  </tr>
+  <tr>
+    <td>Graph-based Recurrent Retriever</td>
+    <td>60.5</td>
+    <td>73.3</td>
+    <td>49.1</td>
+    <td>76.05</td>
+  </tr>
+  <tr>
+    <td>Graph-based Recurrent Retriever (Ablation)</td>
+    <td>56.8</td>
+    <td>69.4</td>
+    <td>46.4</td>
+    <td>74.05</td>
+  </tr>
+  <tr>
+    <td>DecompRC</td>
+    <td>30.00</td>
+    <td>40.65</td>
+    <td>N/A</td>
+    <td>N/A</td>
+  </tr>
+  <tr>
+    <td>Our Approach (top1-context)</td>
+    <td>49.43</td>
+    <td>63.31</td>
+    <td>N/A</td>
+    <td>N/A</td>
+  </tr>
+  <tr>
+    <td>Our Approach (top3-context)</td>
+    <td>49.35</td>
+    <td>63.3</td>
+    <td>N/A</td>
+    <td>N/A</td>
+  </tr>
+  <tr>
+    <td>Our Approach (top6-context)</td>
+    <td>47.24</td>
+    <td>60.82</td>
+    <td>N/A</td>
+    <td>N/A</td>
+  </tr>
+  <tr>
+    <td>Our Approach (all-context)</td>
+    <td>45.52</td>
+    <td>58.74</td>
+    <td>N/A</td>
+    <td>N/A</td>
+  </tr>
+</table>
+<br><br>
+We were able to successfully replicate the results of the paper on the HotpotQA fullwiki development set in terms of both the Exact-Match score and the F1 score as can be seen in Table. The exact match score defines the percentage of the predictions that match any one of the ground truth answers exactly. The F1 score of the model is calculated as (2 x Precision x Recall) / (Precision + Recall), where precision is defined by the number overlaps between the prediction and ground truth divided by the total number of predictions, while the recall is calculated by the overlaps divided by the number of ground truth answers. For HotpotQA, we are also able to match Supporting Fact F1 (SP F1) and Supporting Fact EM (SP EM) to evaluate the sentence-level supporting fact retrieval accuracy.
+<br><br>
+Another experiment that was conducted was to verify the importance of beam search in reasoning path retrieval. Through an ablation experiment that was performed by using a greedy strategy instead of a beam search based retrieval, we noticed a drop in both the F1 and EM scores as can be seen in Table. However, we noticed slightly different numbers than those reported by the authors while being able to replicate the exact same environment settings used by them. We will be raising a pull request to address this issue shortly.
+<br><br>
+Here are some strengths of this approach:
+<ul>
+  <li>Their reasoning path retrieval far outperforms most other existing retrieval approaches on the Hotpot fullwiki dataset. One important factor for this is that existing iterative retrieval methods fix the number of reasoning steps while this accommodates arbitrary steps of reasoning.</li>
+  <li>This paper also emphasizes the use of layer normalization in conjunction with the BERT outputs in obtaining an end-of-evidence symbol during the retrieval phase.</li>
+  <li>By independently encoding the paragraphs with the question, the retriever is made scalable, whereas the reader jointly learns to predict the significance of a reasoning path and answer the question, and thus leverages the self-attention mechanism in the retrieved reasoning paths.</li>
+  <li>They also train the recurrent retriever by using the training examples for the supporting fact prediction task. This is accomplished by substituting the question-paragraph encoding with a question-answer-sentence encoding.</li>
+  <li>Bridge entities are rarely stated clearly in bridge questions. This makes it harder to discover the paragraphs entailed by the bridge entities, but this approach still outperforms other existing methods by a good margin in this scenario.</li>
+  <li>Comparison questions can usually be answered from a single paragraph, and thus the model selects only one paragraph for these questions, resulting in lower scores on the comparison-type questions.</li>
+</ul>
+<br><br>
+<!-- DecompRC -->
+<h3> DecompRC </h3>
+For the reproduction of the DecompRC paper, Table shows the results given on the leaderboard of HotpotQA distractor setting compared to the results we obtained from our local reproduction. Although we reused their pre-trained models, we achieved slightly better $F_1$ performance and worse $EM$ performance. We believe this is due to the changes in data from HotpotQA. When we attempted to reproduce DeCompRC, we used a more recent version (v1.1) of the HotpotQA dataset which removed extremely short questions. We originally hypothesized this would decrease performance, but contrary to our expectation, these results were better. We believe that removing extremely short questions removed samples that had overall bad decomposition scores, and thus the model was able to act more successfully.
+<br><br>
+<table style="text-align: center;">
+  <caption>F1 scores and Exact Matches reported on the Dev set of HotpotQA distractor setting for DecompRC.</caption>
+  <br>
+  <tr>
+    <th rowspan=2>Model</th>
+    <th colspan=2>QA</th>
+  </tr>
+  <tr>
+    <th>EM</th>
+    <th>F1</th>
+  </tr>
+  <tr>
+    <td>DecompRC (reproduced)</td>
+    <td>55.11</td>
+    <td>70.01</td>
+  </tr>
+  <tr>
+    <td>DecompRC</td>
+    <td>59.20</td>
+    <td>69.63</td>
+  </tr>
+</table>
+<br><br>
+An interesting note that we see, is that the decomposition model is incredibly accurate at choosing the decomposition. In Figure below, we see that the model is performing at almost perfect accuracy for question decomposition. To convert the 4 possible decompositions in DeCompRC (bridge, intersection, comparison, onehop) to the 2 question types of HotpotQA (bridge, comparison), we ignored all questions that were labelled onehop and combined all intersection and bridge type questions because when combined these two categories covered 98% of the HotpotQA bridge questions. Although this does simplify the problem, it still shows that accurately performing decomposition is a feasible task.
+<br><br>
+<!-- Main Illustrative Figure --> 
 <div style="text-align: center;">
-<img style="height: 300px;" alt="" src="">
+<img style="" alt="" src="images/decomp_confusion_matrix.png">
 </div>
 <br><br>
-
-<!-- Results -->
-<h3>Qualitative results</h3>
-Show several visual examples of inputs/outputs of your system (success cases and failures) that help us better understand your approach.
+On the other hand, the difficult decompositions could be categorized as onehop by DeCompRC as the onehop type was predicted 28.4% of the time in the development dataset. With looking into this further, the $F_1$ and EM for each decomposition type can be seen in Table where we see onehop questions are performing at about the same level as the other three decomposition types. Thus, we cannot prove that difficult questions are failing to be decomposed, but something we can see from this is that nearly 30% of the questions are being answered as a one hop question and achieving similar results to the other decomposition types. These findings show that while some multi-hop questions are not as difficult as expected and decomposition may not be necessary, there is a larger number of questions that do benefit from decomposition and require a complex understanding of the question and context. Because of this, we attempt to improve these results with a better information retrieval system so the context is more accurate than that of the distractor settings.
 <br><br>
-
-<!-- Main Results Figure --> 
+<table style="text-align: center;">
+  <caption>F1 scores and Exact Matches reported on the development set of HotpotQA distractor setting for each question decomposition.</caption>
+  <br>
+  <tr>
+    <th rowspan=2>Model</th>
+    <th colspan=2>QA</th>
+  </tr>
+  <tr>
+    <th>EM</th>
+    <th>F1</th>
+  </tr>
+  <tr>
+    <td>Intersec</td>
+    <td>55.68</td>
+    <td>72.96</td>
+  </tr>
+  <tr>
+    <td>Comparison</td>
+    <td>52.17</td>
+    <td>63.14</td>
+  </tr>
+  <tr>
+    <td>Bridge</td>
+    <td>60.16</td>
+    <td>75.42</td>
+  </tr>
+  <tr>
+    <td>Onehop</td>
+    <td>50.91</td>
+    <td>66.73</td>
+  </tr>
+</table>
+<br><br>
+<!-- Our Approach -->
+<h3> Our Approach </h3>
+We utilized F1 and EM (exact match) scores as measures of success for our model, as these are the easiest way to compare our performance across many other models who have attempted this task on HotpotQA. The dataset holds a publicly available leaderboard where researchers can display their F1 and EM scores, as well as include a description of their approach. Min et al. and Asai et al. are both on this leaderboard, and thus we can compare our results straightforwardly with each individual model.
+<br><br>
+From our results, we can see that our combined approach performed significantly better than DecompRC, but worse than the Graph-Based Recurrent Retriever. This implies that information retrieval models that utilize a recurrent structure are a more successful approach than TF-IDF retrievers when utilizing reader models based on decomposition such as DecompRC. The architecture and forward pass of an RNN is a more complex calculation than a TF-IDF calculation on a broad set of documents, and seems to be able to capture more context when extracting reasoning paths. Narrowing down the corpus of information to a relatively small, relevant portion helps DecompRC function at a higher performance, and we believe this is the case because the model has much less room for error if the original input is cut down.
+<br><br>
+This hypothesis is supported by the last rows of Table. When we only feed in the most likely reasoning path from the information retrieval process into DecompRC, we achieve the highest evaluation scores. As we relax our criteria for what information we put into DecompRC, however, we see that it performs worse and moves closer to the score of classic DecompRC with simple TF-IDF preprocessing. This seems to suggest that one shortcoming of DecompRC is its inability to realize what isn’t important in a question context, and this can be remedied by supplanting a information retrieval model such as we have done in this project. Figure displays a further breakdown of this performance differential to examine the performance on various question types. The “Top 1” reasoning path contains the top ranked collection of contexts that form a reasoning path, while the “Top N” reasoning path contains all the unique contexts from the top N ranked reasoning paths.
+<br><br>
+<!-- Main Illustrative Figure --> 
 <div style="text-align: center;">
-<img style="height: 300px;" alt="" src="">
+<img style="" alt="" src="images/Scores_context_qtype_f1.png">
 </div>
 <br><br>
+We see that providing more information to DecompRC doesn’t seem to have an impact on the performance of Comparison questions, but the ability to answer one-hop, bridging, and intersection question falls steadily as provided information increases. This makes sense, as comparison questions are often less open-ended than the other question types. For example, the comparison question “Which country has more languages, India or China?” provides much more structure and a smaller range of reasonable answers than a question such as “Which NBA player led the league in points scored in 1991?”. It seems that DecompRC is able to extract comparison context in a way that scales well with information size, but less so for intersection, bridging, or one-hop questions.
+<br><br>
+In Table, we still see that the model with the highest evaluation scores is the original Graph-based Recurrent Retriever created in the publication by Ding et al. This implies that for the task of multi-hop question answering, the approach of using a decomposer to break down a multi-hop question into single-hop questions might be inferior to simply using a model that can handle multi-hop questions, even when using an effective information retrieval system for obtaining reasoning paths.
+<br><br>
 
+<!-- Conclusion -->
+<h3>Conclusion</h3>
+Thus, through this project, we were able to successfully reproduce the experiments and results from two papers, <b>Reasoning Path Retrieval</b> and <b>DecompRC</b>, and understand the techniques behind current state-of-the-art approaches to multihop question answering. Although our results differ slightly from the reported results of these papers, we provide reasonable justifications for why this might be the case. We were also able to leverage modules from these approaches to build our own system that was able to improve upon the results from DecompRC. This emphasises the importance of using an approach that addresses all components in order to solve complex tasks, allowing scalability and reusability of certain modules within the pipeline that can be trained together or separately, to produce better results. 
 
+<br><br>
+
+<!-- Future Work -->
+<h3>Future Work</h3>
+Below are a few ideas that we believe could be implemented to improve performance.
+<br><br>
+<ul>
+  <li>Utilize each of the top-k reasoning paths independently as contexts for the question decomposition and reading comprehension. This would maintain a small and hopefully accurate context while allowing the system to explore multiple different reasoning paths and choose the best one after decomposition.</li>
+  <li>Switch reading comprehension models to the model used by Asai et al. in Retrieving Reasoning Paths. Theirs performed very well without any question decomposition.</li>
+  <li>Improve the categories of the question decomposition so that onehop categorization is minimized as much as possible.<li>
+  <li>Implement a hierarchical retrieval system so paragraphs, sentences, or entities can be used as the context instead of only paragraphs.</li>
+  <li>Determine a method to jointly train all of these tasks as one large task because Chen et al. mentioned this can be an issue.</li>
+</ul>
 
 
   <hr>
